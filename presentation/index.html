@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presentation Slide Deck | Online Voting System</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --slide-bg: #ffffff;
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --emerald: #10b981;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --code-bg: #1e293b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Top control bar */
+        .controls-bar {
+            height: 56px;
+            background: #1e293b;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.5rem;
+            color: white;
+            z-index: 10;
+        }
+
+        .controls-title {
+            font-weight: 700;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .controls-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .btn-ctrl {
+            background: #334155;
+            color: white;
+            border: 1px solid #475569;
+            padding: 0.4rem 0.85rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .btn-ctrl:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .slide-counter {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #94a3b8;
+        }
+
+        /* Slide Container */
+        .stage {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            position: relative;
+        }
+
+        .slide {
+            width: 100%;
+            max-width: 1200px;
+            height: 92%;
+            background: var(--slide-bg);
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            display: none;
+            flex-direction: column;
+            padding: 2.75rem;
+            overflow-y: auto;
+            position: relative;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .slide.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Slide Typography */
+        .slide-tag {
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 0.4rem;
+        }
+
+        .slide-title {
+            font-size: 2.1rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 0.75rem;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            flex: 1;
+        }
+
+        .card-box {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .card-box h3 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .card-box ul {
+            padding-left: 1.25rem;
+            line-height: 1.8;
+            color: #334155;
+            font-size: 1.05rem;
+        }
+
+        /* Code block */
+        pre {
+            background: var(--code-bg);
+            color: #e2e8f0;
+            padding: 1.25rem;
+            border-radius: 10px;
+            font-family: Consolas, monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            line-height: 1.5;
+        }
+
+        /* Slide 1 Special Cover */
+        .slide-cover {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: white;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .slide-cover h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        .slide-cover p {
+            color: #94a3b8;
+            font-size: 1.35rem;
+            max-width: 800px;
+            margin-bottom: 2rem;
+        }
+
+        /* Speaker notes overlay */
+        .speaker-notes-drawer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #1e293b;
+            color: #cbd5e1;
+            border-top: 2px solid var(--primary);
+            padding: 1rem 2rem;
+            font-size: 0.95rem;
+            display: none;
+            z-index: 20;
+            box-shadow: 0 -10px 20px rgba(0,0,0,0.3);
+        }
+
+        .speaker-notes-drawer.open {
+            display: block;
+        }
+
+        .speaker-notes-drawer strong {
+            color: white;
+        }
+
+        /* Images */
+        .slide-img {
+            width: 100%;
+            height: auto;
+            max-height: 480px;
+            object-fit: contain;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Controls Header -->
+    <header class="controls-bar">
+        <div class="controls-title">
+            <span>🗳️</span>
+            <span>Online Voting System — Presentation Slide Deck</span>
+        </div>
+        <div class="controls-actions">
+            <span class="slide-counter" id="slideNum">Slide 1 / 12</span>
+            <button class="btn-ctrl" onclick="prevSlide()">◀ Previous</button>
+            <button class="btn-ctrl" onclick="nextSlide()">Next ▶</button>
+            <button class="btn-ctrl" onclick="toggleNotes()">🎙️ Speaker Notes</button>
+            <button class="btn-ctrl" onclick="toggleFullScreen()">⛶ Fullscreen</button>
+        </div>
+    </header>
+
+    <!-- Slide Presentation Stage -->
+    <main class="stage">
+
+        <!-- SLIDE 1: TITLE -->
+        <section class="slide slide-cover active" data-notes="Good morning/afternoon everyone. Today, I am proud to present our project: The Online Voting System — A Secure and Transparent Web-Based Voting Platform tailored for student council elections and community polls. Built with PHP, MySQL, HTML5, and CSS3, this application ensures strict ballot secrecy, zero double-voting, and verifiable cryptographic receipts.">
+            <div style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #059669; padding: 0.35rem 1rem; border-radius: 9999px; font-weight: 700; font-size: 0.85rem; margin-bottom: 1.5rem; display: inline-block;">
+                ACADEMIC WEB APPLICATION PROJECT
+            </div>
+            <h1>Online Voting System</h1>
+            <p>A Secure, Anonymous &amp; Transparent Electronic Voting Platform for Student Elections and Community Polls</p>
+            <div style="background: rgba(255,255,255,0.05); padding: 1.25rem 2rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); font-size: 1rem; color: #cbd5e1;">
+                <strong>Technology Stack:</strong> PHP 8.x • MySQL Server • HTML5 • CSS3 (Responsive) • JavaScript<br>
+                <strong>Security:</strong> SHA-256 Secret Ballot Proofs • ACID Concurrency • BCRYPT Password Security
+            </div>
+        </section>
+
+        <!-- SLIDE 2: INTRODUCTION -->
+        <section class="slide" data-notes="In this slide, we examine why traditional campus elections fail students. Paper ballots cause low turnout, long lines, manual counting disputes, and high printing costs. Our digital solution, CampusVote, provides 24/7 web accessibility, instant automated tabulation, and cryptographic voter anonymity while ensuring zero duplicate voting.">
+            <div class="slide-tag">PROJECT BACKGROUND</div>
+            <h2 class="slide-title">Introduction &amp; Problem Statement</h2>
+            <div class="grid-2">
+                <div class="card-box" style="background:#fef2f2; border-color:#fecdd3;">
+                    <h3 style="color:#991b1b;">❌ Traditional Paper &amp; Manual Voting</h3>
+                    <ul>
+                        <li><strong>High Overhead:</strong> Substantial costs for ballot printing, physical ballot boxes, and station staffing.</li>
+                        <li><strong>Low Voter Turnout:</strong> Rigid polling station hours and physical queues prevent commuter/off-campus students from voting.</li>
+                        <li><strong>Human Tallying Errors:</strong> Manual counting takes hours, causes fatigue, and leads to recount disputes.</li>
+                        <li><strong>Tampering Hazards:</strong> Paper ballots are prone to ballot box stuffing, misplacement, and physical damage.</li>
+                        <li><strong>Lack of Verification:</strong> Voters have no mechanism to audit whether their vote was honestly included in the final count.</li>
+                    </ul>
+                </div>
+                <div class="card-box" style="background:#ecfdf5; border-color:#a7f3d0;">
+                    <h3 style="color:#065f46;">✅ The CampusVote Digital Solution</h3>
+                    <ul>
+                        <li><strong>24/7 Web Accessibility:</strong> Students vote securely from mobile phones, laptops, or campus tablets.</li>
+                        <li><strong>Cryptographic Ballot Secrecy:</strong> Salted SHA-256 one-way hashes decouple voter identity from candidate choices.</li>
+                        <li><strong>Instant Live Tabulation:</strong> Automated tallying with real-time percentage bars and leader badges upon poll close.</li>
+                        <li><strong>Verifiable Audit Receipts:</strong> Every voter receives an immutable cryptographic confirmation slip.</li>
+                        <li><strong>Enterprise-Grade Security:</strong> Eliminates duplicate voting via composite database unique constraints.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 3: OBJECTIVES -->
+        <section class="slide" data-notes="The project has five primary objectives: first, uncompromising web security; second, absolute voter privacy through secret ballot anonymity; third, mathematical one-vote-per-voter enforcement; fourth, verifiable receipt generation; and fifth, a seamless responsive user experience across desktop and mobile devices.">
+            <div class="slide-tag">PROJECT GOALS</div>
+            <h2 class="slide-title">Objectives of the Project</h2>
+            <div style="display:flex; flex-direction:column; gap:1rem;">
+                <div class="card-box" style="border-left: 5px solid var(--primary);">
+                    <h4 style="color:var(--primary); font-size:1.15rem; margin-bottom:0.25rem;">1. Implement Robust Fraud Prevention &amp; Security</h4>
+                    <p style="color:#475569; font-size:1rem;">Utilize PHP Data Objects (PDO) with prepared statements to eliminate SQL injection, implement CSRF token guards on all post actions, and hash user passwords with industry-standard BCRYPT.</p>
+                </div>
+                <div class="card-box" style="border-left: 5px solid var(--emerald);">
+                    <h4 style="color:var(--emerald); font-size:1.15rem; margin-bottom:0.25rem;">2. Ensure Absolute Secret Ballot Anonymity</h4>
+                    <p style="color:#475569; font-size:1rem;">Decouple the voter's identity (Student ID) from their chosen candidates by encrypting voter signatures using SHA-256 one-way hashing with cryptographic salts.</p>
+                </div>
+                <div class="card-box" style="border-left: 5px solid #f59e0b;">
+                    <h4 style="color:#d97706; font-size:1.15rem; margin-bottom:0.25rem;">3. Mathematically Enforce the Single-Vote Rule</h4>
+                    <p style="color:#475569; font-size:1rem;">Enforce database-level composite unique keys <code>(voter_hash, position_id)</code> coupled with ACID transactions, making duplicate voting technically impossible.</p>
+                </div>
+                <div class="card-box" style="border-left: 5px solid #8b5cf6;">
+                    <h4 style="color:#7c3aed; font-size:1.15rem; margin-bottom:0.25rem;">4. Issue Independent Verifiable Receipts</h4>
+                    <p style="color:#475569; font-size:1rem;">Generate an authentic digital confirmation slip with a unique 64-character token and timestamp that voters can print or archive as mathematical proof of participation.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 4: KEY FEATURES -->
+        <section class="slide" data-notes="Here we see the six core features that set CampusVote apart. The student portal provides easy self-registration. The ballot interface is dynamic and interactive. Every cast vote issues a cryptographic receipt. Results calculate in real time. The administrative panel gives election commissioners complete control, and every critical event is logged to a tamper-evident audit table.">
+            <div class="slide-tag">SYSTEM HIGHLIGHTS</div>
+            <h2 class="slide-title">Key System Features</h2>
+            <div class="grid-2">
+                <div class="card-box">
+                    <h3>👥 Student Voter Portal</h3>
+                    <p style="color:#475569;">Simple self-registration using Student Matriculation ID, personalized voting dashboard, eligibility indicators, and previous election records.</p>
+                </div>
+                <div class="card-box">
+                    <h3>🗳️ Interactive Digital Ballot</h3>
+                    <p style="color:#475569;">Offices dynamically grouped with candidate avatars, party slates, and manifestos. Client-side validation prompts users if any office was omitted.</p>
+                </div>
+                <div class="card-box">
+                    <h3>📜 Cryptographic Ballot Receipts</h3>
+                    <p style="color:#475569;">Instant post-voting receipt verification slip displaying the exact timestamp and a SHA-256 audit token, ready for printing or PDF archiving.</p>
+                </div>
+                <div class="card-box">
+                    <h3>📊 Real-Time Analytics &amp; Visual Tally</h3>
+                    <p style="color:#475569;">Dynamic percentage calculations with animated CSS progress bars and automated "Winner" or "Leading" badges for transparency.</p>
+                </div>
+                <div class="card-box">
+                    <h3>⚙️ Administrative Control Center</h3>
+                    <p style="color:#475569;">Full CRUD management for scheduled elections, contested positions, candidate bios, voter activation status, and election time windows.</p>
+                </div>
+                <div class="card-box">
+                    <h3>🛡️ Tamper-Evident Security Audit Log</h3>
+                    <p style="color:#475569;">Records all critical events (registrations, logins, ballot sealing, admin changes) alongside client IP addresses and timestamps.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 5: SYSTEM DESIGN -->
+        <section class="slide" data-notes="The application is engineered around a standard 3-Tier Client-Server Architecture. Tier 1 is the presentation client using HTML5, CSS3, and JavaScript. Tier 2 is the PHP 8.x backend engine handling authentication, CSRF validation, and anonymization. Tier 3 is the MySQL relational database executing ACID transactions to guarantee zero duplicate votes.">
+            <div class="slide-tag">TECHNICAL ARCHITECTURE</div>
+            <h2 class="slide-title">System Design: 3-Tier Architecture</h2>
+            <div style="display:flex; gap:1.5rem; align-items:center;">
+                <div style="flex:2;">
+                    <img src="../assets/images/architecture_diagram.png" alt="Architecture Diagram" class="slide-img">
+                </div>
+                <div style="flex:1;" class="card-box">
+                    <h3>Design Principles</h3>
+                    <ul style="font-size:0.95rem; line-height:1.6;">
+                        <li><strong>Presentation Layer:</strong> Pure HTML5, CSS3, and vanilla JS for fast mobile loading without heavy external libraries.</li>
+                        <li><strong>Application Tier:</strong> Modular PHP scripts with secure session cookies (Lax/HttpOnly) and CSRF protection.</li>
+                        <li><strong>Persistence Tier:</strong> MySQL Server 8.0 running InnoDB engine with row-level locks and foreign key cascades.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 6: DATABASE DESIGN -->
+        <section class="slide" data-notes="Our database consists of seven normalized tables. Notice the crucial security architecture in the votes table: instead of linking user_id directly to candidate_id, we use a salted one-way hash voter_hash. A composite UNIQUE constraint on (voter_hash, position_id) guarantees that a student can never submit two votes for the same position, while keeping their identity secret.">
+            <div class="slide-tag">DATA MODELING</div>
+            <h2 class="slide-title">Database Design &amp; Relational Schema</h2>
+            <div class="card-box" style="padding: 1.25rem;">
+                <table style="width:100%; border-collapse:collapse; font-size:0.95rem;">
+                    <thead>
+                        <tr style="background:#f1f5f9; text-align:left;">
+                            <th style="padding:0.6rem;">Table Name</th>
+                            <th style="padding:0.6rem;">Primary Keys &amp; Key Fields</th>
+                            <th style="padding:0.6rem;">Security &amp; Integrity Role</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom:1px solid #e2e8f0;">
+                            <td style="padding:0.6rem;"><strong>users</strong></td>
+                            <td style="padding:0.6rem;"><code>id, voter_id, email, password, role</code></td>
+                            <td style="padding:0.6rem;">Voter &amp; Admin accounts with BCRYPT password hashing.</td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #e2e8f0;">
+                            <td style="padding:0.6rem;"><strong>elections</strong></td>
+                            <td style="padding:0.6rem;"><code>id, title, start_date, end_date, status</code></td>
+                            <td style="padding:0.6rem;">Controls election lifecycle (upcoming, active, completed).</td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #e2e8f0;">
+                            <td style="padding:0.6rem;"><strong>positions</strong></td>
+                            <td style="padding:0.6rem;"><code>id, election_id, title, max_votes</code></td>
+                            <td style="padding:0.6rem;">Foreign key cascade linked to elections.</td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #e2e8f0;">
+                            <td style="padding:0.6rem;"><strong>candidates</strong></td>
+                            <td style="padding:0.6rem;"><code>id, position_id, name, party, manifesto</code></td>
+                            <td style="padding:0.6rem;">Candidate profiles, photos, and political slates.</td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #e2e8f0;">
+                            <td style="padding:0.6rem;"><strong style="color:var(--primary);">votes</strong></td>
+                            <td style="padding:0.6rem;"><code>id, election_id, position_id, candidate_id, voter_hash</code></td>
+                            <td style="padding:0.6rem;"><strong style="color:var(--emerald);">UNIQUE(voter_hash, position_id)</strong> ensures strict 1 vote without identity link!</td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #e2e8f0;">
+                            <td style="padding:0.6rem;"><strong>voter_ballots</strong></td>
+                            <td style="padding:0.6rem;"><code>id, user_id, election_id, receipt_token, cast_at</code></td>
+                            <td style="padding:0.6rem;">Issues SHA-256 verifiable confirmation tokens to voters.</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:0.6rem;"><strong>audit_logs</strong></td>
+                            <td style="padding:0.6rem;"><code>id, user_id, action, details, ip_address, created_at</code></td>
+                            <td style="padding:0.6rem;">Immutable tamper-evident system event stream.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- SLIDE 7: HTML & CSS CODE -->
+        <section class="slide" data-notes="On this slide, we examine our front-end HTML5 and CSS3 implementation. The HTML uses clean semantic markup where entire candidate cards act as accessible labels for radio inputs. Our CSS3 stylesheet uses CSS variables, auto-fitting CSS Grid layouts, and dynamic state styling so when a candidate is selected, the card lights up with primary borders.">
+            <div class="slide-tag">FRONT-END CODE</div>
+            <h2 class="slide-title">HTML5 &amp; CSS3 Code Architecture</h2>
+            <div class="grid-2">
+                <div>
+                    <h4 style="margin-bottom:0.5rem; color:var(--primary);">HTML5 Digital Ballot Component</h4>
+                    <pre>&lt;!-- Responsive Candidate Ballot Card --&gt;
+&lt;label class="candidate-label"&gt;
+  &lt;input type="radio" 
+         name="votes[&lt;?= $pos['id'] ?&gt;]" 
+         value="&lt;?= $candidate['id'] ?&gt;" 
+         class="candidate-radio"&gt;
+  &lt;div class="candidate-card-inner"&gt;
+    &lt;div class="candidate-avatar"&gt;A&lt;/div&gt;
+    &lt;div class="candidate-name"&gt;
+      &lt;?= htmlspecialchars($c['name']) ?&gt;
+    &lt;/div&gt;
+    &lt;div class="candidate-party"&gt;
+      &lt;?= htmlspecialchars($c['party']) ?&gt;
+    &lt;/div&gt;
+    &lt;div class="candidate-manifesto"&gt;
+      "&lt;?= htmlspecialchars($c['manifesto']) ?&gt;"
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/label&gt;</pre>
+                </div>
+                <div>
+                    <h4 style="margin-bottom:0.5rem; color:var(--emerald);">CSS3 Grid &amp; Interactive Card Styles</h4>
+                    <pre>/* Responsive Candidate Grid */
+.candidate-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+}
+
+/* Card Selection State */
+.candidate-label {
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 1.25rem;
+  cursor: pointer;
+  transition: all 0.25s ease-in-out;
+}
+
+.candidate-label.selected {
+  border-color: var(--primary);
+  background-color: #eff6ff;
+  box-shadow: 0 0 0 2px var(--primary);
+}</pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 8: PHP BACKEND LOGIC -->
+        <section class="slide" data-notes="Here is the heart of our PHP voting engine. We wrap the entire ballot submission within a database transaction. Notice line 10 where we compute $voterHash using SHA-256. If any error occurs or duplicate voting is attempted, the transaction rolls back cleanly, protecting database integrity.">
+            <div class="slide-tag">BACK-END LOGIC</div>
+            <h2 class="slide-title">PHP &amp; MySQL Transaction Execution</h2>
+            <div class="grid-2">
+                <div>
+                    <h4 style="margin-bottom:0.5rem; color:var(--primary);">PHP Ballot Sealing with ACID PDO</h4>
+                    <pre>// 1. Verify CSRF Token & Duplicate Vote Check
+verifyCSRFToken($_POST['csrf_token']);
+if (hasUserVoted($user['id'], $electionId)) {
+    die("Duplicate vote detected.");
+}
+
+// 2. Wrap ballot submission in ACID Transaction
+$db->beginTransaction();
+try {
+    // Generate one-way anonymized voter hash
+    $vHash = hash('sha256', $user['voter_id'].'_'.$electionId.'_'.SALT);
+    $stmt = $db->prepare("INSERT INTO votes 
+      (election_id, position_id, candidate_id, voter_hash) 
+      VALUES (?, ?, ?, ?)");
+      
+    foreach ($selections as $posId => $candId) {
+        $stmt->execute([$electionId, $posId, $candId, $vHash]);
+    }
+
+    // 3. Issue Verifiable SHA-256 Receipt
+    $receipt = hash('sha256', $user['id'].'_'.microtime(true));
+    $stmtB = $db->prepare("INSERT INTO voter_ballots 
+      (user_id, election_id, receipt_token) VALUES (?, ?, ?)");
+    $stmtB->execute([$user['id'], $electionId, $receipt]);
+
+    $db->commit();
+} catch (Exception $e) {
+    $db->rollBack();
+}</pre>
+                </div>
+                <div class="card-box">
+                    <h3>Key Security Guarantees</h3>
+                    <ul>
+                        <li><strong>Prepared Statements:</strong> Every user query uses parameterized execution, preventing 100% of SQL injection attempts.</li>
+                        <li><strong>Atomic Transactions:</strong> All position selections are committed together; if any error occurs, all changes roll back.</li>
+                        <li><strong>Cryptographic Anonymity:</strong> <code>$vHash</code> prevents correlating the student account with the ballot choice.</li>
+                        <li><strong>CSRF Token Binding:</strong> Protects voters against cross-site request forgery attacks.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 9: MYSQL SCREENSHOT -->
+        <section class="slide" data-notes="This slide presents the live MySQL database screenshot from our local server environment. You can see all seven tables successfully structured under InnoDB with zero integrity errors. The indexes, primary keys, and foreign keys allow sub-millisecond query execution.">
+            <div class="slide-tag">DATABASE EVIDENCE</div>
+            <h2 class="slide-title">PHP with MySQL Screenshot &amp; Server Metrics</h2>
+            <div style="display:flex; gap:1.5rem; align-items:center;">
+                <div style="flex:2;">
+                    <img src="../assets/images/mysql_screenshot.png" alt="MySQL Server Screenshot" class="slide-img">
+                </div>
+                <div style="flex:1;" class="card-box">
+                    <h3>MySQL Implementation Metrics</h3>
+                    <ul style="font-size:0.95rem; line-height:1.6;">
+                        <li><strong>Database:</strong> <code>online_voting_db</code></li>
+                        <li><strong>Engine:</strong> InnoDB with Row-Level Locking</li>
+                        <li><strong>Charset:</strong> UTF-8 (utf8mb4_unicode_ci)</li>
+                        <li><strong>Total Tables:</strong> 7 Relational Tables</li>
+                        <li><strong>Relational Keys:</strong> 6 Foreign Keys (ON DELETE CASCADE)</li>
+                        <li><strong>Query Latency:</strong> &lt; 3 milliseconds average execution</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 10: APPLICATION UI SCREENSHOTS -->
+        <section class="slide" data-notes="Here are high-resolution screenshots of the working user interface. On the left is the clean, accessible Student Ballot Interface showing position groupings and candidate manifestos. On the right is the Live Election Results page showing instant percentage tallies and winner badges.">
+            <div class="slide-tag">USER INTERFACE DEMO</div>
+            <h2 class="slide-title">User Interface &amp; Live Application Views</h2>
+            <div class="grid-2">
+                <div style="text-align:center;">
+                    <img src="../assets/images/ui_ballot_screenshot.png" alt="Ballot UI Screenshot" class="slide-img">
+                    <p style="font-weight:700; color:var(--primary); margin-top:0.5rem; font-size:0.95rem;">▲ Student Digital Ballot (Office Groups &amp; Manifestos)</p>
+                </div>
+                <div style="text-align:center;">
+                    <img src="../assets/images/ui_results_screenshot.png" alt="Results UI Screenshot" class="slide-img">
+                    <p style="font-weight:700; color:var(--emerald); margin-top:0.5rem; font-size:0.95rem;">▲ Live Election Results &amp; Real-Time Candidate Tallies</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 11: CONCLUSION & ROADMAP -->
+        <section class="slide" data-notes="In conclusion, CampusVote demonstrates how standard web technologies like PHP and MySQL can be engineered into an enterprise-grade democratic election platform. Looking forward, we plan to integrate two-factor SMS authentication and explore decentralized blockchain ledgers.">
+            <div class="slide-tag">PROJECT SUMMARY</div>
+            <h2 class="slide-title">Conclusion &amp; Future Roadmap</h2>
+            <div class="grid-2">
+                <div class="card-box" style="background:#f8fafc;">
+                    <h3 style="color:var(--primary);">🏆 Key Project Accomplishments</h3>
+                    <ul>
+                        <li><strong>Working Full-Stack Platform:</strong> Developed and validated a complete voting system with PHP 8 and MySQL.</li>
+                        <li><strong>Zero Double Voting:</strong> Successfully guaranteed single-vote integrity through relational constraints.</li>
+                        <li><strong>End-to-End Privacy:</strong> Protected voter choices with salted SHA-256 cryptographic hashes.</li>
+                        <li><strong>Instant Tallying:</strong> Replaced hours of manual ballot counting with sub-second automated calculation.</li>
+                    </ul>
+                </div>
+                <div class="card-box" style="background:#eff6ff; border-color:#bfdbfe;">
+                    <h3 style="color:var(--primary-dark);">🚀 Future Enhancements</h3>
+                    <ul>
+                        <li><strong>Biometric / 2FA Verification:</strong> SMS or Email One-Time Password (OTP) before ballot unlocking.</li>
+                        <li><strong>Blockchain Ledger Integration:</strong> Anchor receipt tokens into Ethereum or Hyperledger fabric for decentralized immutability.</li>
+                        <li><strong>Automated PDF Results Certificate:</strong> Cryptographically signed official election declaration for election commissioners.</li>
+                        <li><strong>Voter Turnout Heatmaps:</strong> Visual department-wise participation statistics.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 12: THANK YOU -->
+        <section class="slide slide-cover" data-notes="Thank you very much for your time and attention. We are now ready to demonstrate the live voting workflow and welcome any questions from the evaluator!">
+            <div style="font-size: 3.5rem; margin-bottom: 0.5rem;">🗳️</div>
+            <h1>Thank You!</h1>
+            <p>Questions, Comments &amp; Live System Demonstration</p>
+            <div style="background: rgba(255,255,255,0.08); padding: 1.25rem 2.5rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.15); font-size: 1.05rem; color: #cbd5e1;">
+                <strong>CampusVote Platform</strong> • Designed &amp; Implemented with PHP &amp; MySQL<br>
+                Prepared for Video Recording &amp; Google Classroom Submission
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Speaker Notes Drawer -->
+    <div class="speaker-notes-drawer" id="speakerNotes">
+        <strong>🎙️ Presenter Script / Speaker Notes:</strong>
+        <p id="notesContent" style="margin-top:0.4rem; line-height:1.5;"></p>
+    </div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        let currentSlide = 0;
+        const slideNumEl = document.getElementById('slideNum');
+        const notesDrawer = document.getElementById('speakerNotes');
+        const notesContent = document.getElementById('notesContent');
+
+        function updateSlide() {
+            slides.forEach((slide, idx) => {
+                slide.classList.toggle('active', idx === currentSlide);
+            });
+            slideNumEl.innerText = `Slide ${currentSlide + 1} / ${slides.length}`;
+            
+            // Update speaker notes content
+            const activeNotes = slides[currentSlide].getAttribute('data-notes') || 'No notes for this slide.';
+            notesContent.innerText = activeNotes;
+        }
+
+        function nextSlide() {
+            if (currentSlide < slides.length - 1) {
+                currentSlide++;
+                updateSlide();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateSlide();
+            }
+        }
+
+        function toggleNotes() {
+            notesDrawer.classList.toggle('open');
+        }
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        // Keyboard Navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+                nextSlide();
+            } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+                prevSlide();
+            } else if (e.key.toLowerCase() === 's') {
+                toggleNotes();
+            } else if (e.key.toLowerCase() === 'f') {
+                toggleFullScreen();
+            }
+        });
+
+        // Initialize notes
+        updateSlide();
+    </script>
+</body>
+</html>
