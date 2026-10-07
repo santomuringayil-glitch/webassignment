@@ -175,14 +175,20 @@ include __DIR__ . '/../includes/navbar.php';
                                         <span class="badge badge-completed">Completed</span>
                                     <?php endif; ?>
                                 </td>
-                                <td><?= $el['pos_count'] ?> offices</td>
+                                <td>
+                                    <?php if ($el['pos_count'] == 0): ?>
+                                        <span class="badge" style="background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5;">0 offices (Needs setup)</span>
+                                    <?php else: ?>
+                                        <span class="badge" style="background:#f1f5f9; color:var(--secondary);"><?= $el['pos_count'] ?> offices</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td><?= $el['ballot_count'] ?> votes</td>
                                 <td style="font-size:0.85rem;">
                                     <?= date('M d, y', strtotime($el['start_date'])) ?> to <?= date('M d, y', strtotime($el['end_date'])) ?>
                                 </td>
-                                <td style="display:flex; gap:0.4rem;">
+                                <td style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+                                    <a href="candidates.php?election_id=<?= $el['id'] ?>" class="btn btn-primary btn-sm">+ Candidates</a>
                                     <a href="elections.php?edit_id=<?= $el['id'] ?>" class="btn btn-outline btn-sm">Edit</a>
-                                    <a href="candidates.php?election_id=<?= $el['id'] ?>" class="btn btn-outline btn-sm">Candidates</a>
                                     <a href="elections.php?delete_id=<?= $el['id'] ?>" class="btn btn-danger btn-sm" onclick="return confirm('Warning: Deleting this election will remove associated positions, candidates, and cast votes. Continue?')">Delete</a>
                                 </td>
                             </tr>

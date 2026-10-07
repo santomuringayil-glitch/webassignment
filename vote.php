@@ -57,10 +57,22 @@ foreach ($positions as $pos) {
     $positionsWithCandidates[] = $pos;
 }
 
+// Count total candidates
+$totalCandidates = 0;
+foreach ($positionsWithCandidates as $pos) {
+    $totalCandidates += count($pos['candidates']);
+}
+
 // Process Ballot Submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrfToken = $_POST['csrf_token'] ?? '';
     verifyCSRFToken($csrfToken);
+
+    if ($totalCandidates === 0) {
+        $_SESSION['flash_error'] = "Cannot submit ballot: No candidates exist in this election.";
+        header("Location: vote.php?election_id=" . $electionId);
+        exit;
+    }
 
     // Double check again inside request
     if (hasUserVoted($user['id'], $electionId)) {
@@ -150,66 +162,88 @@ include __DIR__ . '/includes/navbar.php';
             <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
         <?php endif; ?>
 
-        <!-- Ballot Form -->
-        <form id="ballotForm" action="vote.php" method="POST">
-            <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
-            <input type="hidden" name="election_id" value="<?= $election['id'] ?>">
-
-            <?php foreach ($positionsWithCandidates as $index => $pos): ?>
-                <div class="position-card">
-                    <div class="position-title">
-                        <div>
-                            <span style="font-size: 0.8rem; font-weight: 700; color: var(--primary); text-transform: uppercase;">
-                                Office <?= $index + 1 ?> of <?= count($positionsWithCandidates) ?>
-                            </span>
-                            <h3 style="margin-top: 0.2rem;"><?= htmlspecialchars($pos['title']) ?></h3>
-                        </div>
-                        <span class="badge" style="background:#f1f5f9; color:var(--secondary);">
-                            Vote for <?= $pos['max_votes'] ?>
-                        </span>
-                    </div>
-
-                    <?php if (empty($pos['candidates'])): ?>
-                        <p style="font-style: italic; color: var(--text-muted);">No candidates nominated for this position.</p>
-                    <?php else: ?>
-                        <div class="candidate-options">
-                            <?php foreach ($pos['candidates'] as $candidate): ?>
-                                <label class="candidate-label">
-                                    <input 
-                                        type="radio" 
-                                        name="votes[<?= $pos['id'] ?>]" 
-                                        value="<?= $candidate['id'] ?>" 
-                                        class="candidate-radio"
-                                    >
-                                    <div class="candidate-card-inner">
-                                        <div class="candidate-avatar">
-                                            <?= strtoupper(substr($candidate['name'], 0, 1)) ?>
-                                        </div>
-                                        <div class="candidate-name"><?= htmlspecialchars($candidate['name']) ?></div>
-                                        <div class="candidate-party"><?= htmlspecialchars($candidate['party']) ?></div>
-                                        <div class="candidate-manifesto">
-                                            "<?= htmlspecialchars($candidate['manifesto']) ?>"
-                                        </div>
-                                    </div>
-                                </label>
-                            <?php endforeach; ?>
-                        </div>
+        <?php if ($totalCandidates === 0): ?>
+            <!-- Empty State when no candidates configured -->
+            <div class="card" style="text-align: center; padding: 3rem; background: #fffbeb; border: 1px solid #fde68a;">
+                <div style="font-size: 3rem; margin-bottom: 0.75rem;">📋</div>
+                <h2 style="color: #92400e; margin-bottom: 0.5rem;">No Candidates Nominated Yet</h2>
+                <p style="color: #78350f; max-width: 550px; margin: 0 auto 1.5rem; font-size: 1rem;">
+                    This election currently has no offices or candidates configured. 
+                    Voting options will appear here once candidates are nominated by the election administrator.
+                </p>
+                <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
+                    <a href="dashboard.php" class="btn btn-outline">&larr; Return to Dashboard</a>
+                    <?php if (isAdmin()): ?>
+                        <a href="admin/candidates.php?election_id=<?= $election['id'] ?>" class="btn btn-primary">
+                            ⚙️ Add Positions &amp; Candidates (Admin)
+                        </a>
                     <?php endif; ?>
                 </div>
-            <?php endforeach; ?>
-
-            <!-- Ballot Submission Action Strip -->
-            <div class="card" style="text-align: center; padding: 2rem; background: #fafafa;">
-                <h3 style="margin-bottom: 0.5rem;">Ready to Cast Your Ballot?</h3>
-                <p style="margin-bottom: 1.5rem;">Verify your selections above carefully before confirming submission.</p>
-                <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-                    <a href="dashboard.php" class="btn btn-outline btn-lg">Save &amp; Return Later</a>
-                    <button type="submit" class="btn btn-primary btn-lg" style="background: #10b981; border-color: #059669;">
-                        Submit &amp; Seal My Vote 🗳️
-                    </button>
-                </div>
             </div>
-        </form>
+        <?php else: ?>
+            <!-- Ballot Form -->
+            <form id="ballotForm" action="vote.php" method="POST">
+                <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
+                <input type="hidden" name="election_id" value="<?= $election['id'] ?>">
+
+                <?php foreach ($positionsWithCandidates as $index => $pos): ?>
+                    <div class="position-card">
+                        <div class="position-title">
+                            <div>
+                                <span style="font-size: 0.8rem; font-weight: 700; color: var(--primary); text-transform: uppercase;">
+                                    Office <?= $index + 1 ?> of <?= count($positionsWithCandidates) ?>
+                                </span>
+                                <h3 style="margin-top: 0.2rem;"><?= htmlspecialchars($pos['title']) ?></h3>
+                            </div>
+                            <span class="badge" style="background:#f1f5f9; color:var(--secondary);">
+                                Vote for <?= $pos['max_votes'] ?>
+                            </span>
+                        </div>
+
+                        <?php if (empty($pos['candidates'])): ?>
+                            <div style="padding: 1.25rem; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1; text-align: center; color: var(--text-muted);">
+                                ℹ️ No candidates nominated for this office yet.
+                            </div>
+                        <?php else: ?>
+                            <div class="candidate-options">
+                                <?php foreach ($pos['candidates'] as $candidate): ?>
+                                    <label class="candidate-label">
+                                        <input 
+                                            type="radio" 
+                                            name="votes[<?= $pos['id'] ?>]" 
+                                            value="<?= $candidate['id'] ?>" 
+                                            class="candidate-radio"
+                                        >
+                                        <div class="candidate-card-inner">
+                                            <div class="candidate-avatar">
+                                                <?= strtoupper(substr($candidate['name'], 0, 1)) ?>
+                                            </div>
+                                            <div class="candidate-name"><?= htmlspecialchars($candidate['name']) ?></div>
+                                            <div class="candidate-party"><?= htmlspecialchars($candidate['party']) ?></div>
+                                            <div class="candidate-manifesto">
+                                                "<?= htmlspecialchars($candidate['manifesto']) ?>"
+                                            </div>
+                                        </div>
+                                    </label>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
+
+                <!-- Ballot Submission Action Strip -->
+                <div class="card" style="text-align: center; padding: 2rem; background: #fafafa;">
+                    <h3 style="margin-bottom: 0.5rem;">Ready to Cast Your Ballot?</h3>
+                    <p style="margin-bottom: 1.5rem;">Verify your selections above carefully before confirming submission.</p>
+                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                        <a href="dashboard.php" class="btn btn-outline btn-lg">Save &amp; Return Later</a>
+                        <button type="submit" class="btn btn-primary btn-lg" style="background: #10b981; border-color: #059669;">
+                            Submit &amp; Seal My Vote 🗳️
+                        </button>
+                    </div>
+                </div>
+            </form>
+        <?php endif; ?>
     </div>
 </main>
 

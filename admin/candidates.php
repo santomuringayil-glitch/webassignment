@@ -56,26 +56,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_type']) && $_P
     }
 }
 
+// Check if filtered by election
+$filterElectionId = filter_input(INPUT_GET, 'election_id', FILTER_VALIDATE_INT);
+
 // Fetch all elections for dropdown
 $elections = $db->query("SELECT id, title FROM elections ORDER BY id DESC")->fetchAll();
 
 // Fetch all positions with their election titles
-$positions = $db->query("
+$positionsQuery = "
     SELECT p.*, e.title as election_title 
     FROM positions p 
     JOIN elections e ON p.election_id = e.id 
-    ORDER BY e.id DESC, p.priority ASC, p.id ASC
-")->fetchAll();
+";
+if ($filterElectionId) {
+    $positionsQuery .= " WHERE e.id = " . (int)$filterElectionId;
+}
+$positionsQuery .= " ORDER BY e.id DESC, p.priority ASC, p.id ASC";
+$positions = $db->query($positionsQuery)->fetchAll();
+
+// Group positions by election for easy selection
+$positionsByElection = [];
+foreach ($positions as $p) {
+    $positionsByElection[$p['election_title']][] = $p;
+}
 
 // Fetch all candidates
-$candidates = $db->query("
-    SELECT c.*, p.title as position_title, e.title as election_title,
+$candidatesQuery = "
+    SELECT c.*, p.title as position_title, e.title as election_title, e.id as election_id,
     (SELECT COUNT(*) FROM votes v WHERE v.candidate_id = c.id) as vote_count
     FROM candidates c 
     JOIN positions p ON c.position_id = p.id 
     JOIN elections e ON p.election_id = e.id 
-    ORDER BY e.id DESC, p.title ASC, c.name ASC
-")->fetchAll();
+";
+if ($filterElectionId) {
+    $candidatesQuery .= " WHERE e.id = " . (int)$filterElectionId;
+}
+$candidatesQuery .= " ORDER BY e.id DESC, p.title ASC, c.name ASC";
+$candidates = $db->query($candidatesQuery)->fetchAll();
 
 $pageTitle = "Candidates & Positions";
 include __DIR__ . '/../includes/header.php';
@@ -84,12 +101,26 @@ include __DIR__ . '/../includes/navbar.php';
 
 <main class="main-content">
     <div class="container">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:2rem;">
             <div>
                 <h2>Positions &amp; Candidate Nominations</h2>
                 <p style="margin-bottom:0;">Configure offices to be elected and register verified candidate profiles.</p>
             </div>
-            <a href="index.php" class="btn btn-outline">&larr; Back to Dashboard</a>
+            <div style="display:flex; gap:0.5rem; align-items:center;">
+                <!-- Election Filter -->
+                <form action="candidates.php" method="GET" style="display:flex; gap:0.5rem; align-items:center;">
+                    <label for="filter_election" style="font-size:0.85rem; font-weight:600; color:var(--text-muted);">Filter Election:</label>
+                    <select name="election_id" id="filter_election" class="form-control" style="width:auto; padding:0.4rem 0.75rem; font-size:0.9rem;" onchange="this.form.submit()">
+                        <option value="">-- All Elections --</option>
+                        <?php foreach ($elections as $el): ?>
+                            <option value="<?= $el['id'] ?>" <?= ($filterElectionId == $el['id']) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($el['title']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </form>
+                <a href="elections.php" class="btn btn-outline btn-sm">&larr; Manage Elections</a>
+            </div>
         </div>
 
         <?php if (!empty($message) || (isset($_GET['msg']) && $_GET['msg'] === 'cand_deleted')): ?>
@@ -103,8 +134,11 @@ include __DIR__ . '/../includes/navbar.php';
         <div class="grid-2" style="margin-bottom: 2.5rem; align-items: flex-start;">
             <!-- Add New Position Card -->
             <div class="card">
-                <h3>+ Add Election Office / Position</h3>
-                <form action="candidates.php" method="POST" style="margin-top:1rem;">
+                <h3>1. Add Election Office / Position</h3>
+                <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">
+                    First create an office (e.g., President, General Secretary) for your election.
+                </p>
+                <form action="candidates.php<?= $filterElectionId ? '?election_id='.$filterElectionId : '' ?>" method="POST">
                     <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
                     <input type="hidden" name="action_type" value="add_position">
 
@@ -113,57 +147,75 @@ include __DIR__ . '/../includes/navbar.php';
                         <select name="election_id" id="election_id" class="form-control" required>
                             <option value="">-- Choose Election --</option>
                             <?php foreach ($elections as $el): ?>
-                                <option value="<?= $el['id'] ?>"><?= htmlspecialchars($el['title']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="position_title">Position Title</label>
-                        <input type="text" id="position_title" name="position_title" class="form-control" required placeholder="e.g. Student Council Treasurer">
-                    </div>
-
-                    <button type="submit" class="btn btn-outline" style="width:100%;">Create Position</button>
-                </form>
-            </div>
-
-            <!-- Add Candidate Card -->
-            <div class="card">
-                <h3>+ Nominate Candidate</h3>
-                <form action="candidates.php" method="POST" style="margin-top:1rem;">
-                    <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
-                    <input type="hidden" name="action_type" value="add_candidate">
-
-                    <div class="form-group">
-                        <label class="form-label" for="position_id">Contested Office</label>
-                        <select name="position_id" id="position_id" class="form-control" required>
-                            <option value="">-- Select Position &amp; Election --</option>
-                            <?php foreach ($positions as $p): ?>
-                                <option value="<?= $p['id'] ?>">
-                                    <?= htmlspecialchars($p['election_title']) ?> &rarr; <?= htmlspecialchars($p['title']) ?>
+                                <option value="<?= $el['id'] ?>" <?= ($filterElectionId == $el['id']) ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($el['title']) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
 
-                    <div class="grid-2" style="gap:1rem; margin-bottom:1rem;">
-                        <div>
-                            <label class="form-label" for="name">Candidate Name</label>
-                            <input type="text" id="name" name="name" class="form-control" required placeholder="e.g. Sarah Jenkins">
-                        </div>
-                        <div>
-                            <label class="form-label" for="party">Party / Slate</label>
-                            <input type="text" id="party" name="party" class="form-control" placeholder="e.g. Campus Action">
-                        </div>
-                    </div>
-
                     <div class="form-group">
-                        <label class="form-label" for="manifesto">Candidate Manifesto / Vision</label>
-                        <textarea id="manifesto" name="manifesto" class="form-control" rows="2" placeholder="Brief statement of policy priorities..."></textarea>
+                        <label class="form-label" for="position_title">Position / Office Title</label>
+                        <input type="text" id="position_title" name="position_title" class="form-control" required placeholder="e.g. Student Council President">
                     </div>
 
-                    <button type="submit" class="btn btn-primary" style="width:100%;">Save Candidate</button>
+                    <button type="submit" class="btn btn-outline" style="width:100%;">+ Create Office Position</button>
                 </form>
+            </div>
+
+            <!-- Add Candidate Card -->
+            <div class="card">
+                <h3>2. Nominate Candidate</h3>
+                <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">
+                    Add candidate details and attach them to an office position.
+                </p>
+                <?php if (empty($positions)): ?>
+                    <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:1.25rem; text-align:center; color:#92400e;">
+                        <p style="margin-bottom:0.5rem; font-weight:600;">⚠️ No Positions Available Yet</p>
+                        <p style="font-size:0.85rem; margin-bottom:0;">
+                            Please create at least one office position using the form on the left first.
+                        </p>
+                    </div>
+                <?php else: ?>
+                    <form action="candidates.php<?= $filterElectionId ? '?election_id='.$filterElectionId : '' ?>" method="POST">
+                        <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
+                        <input type="hidden" name="action_type" value="add_candidate">
+
+                        <div class="form-group">
+                            <label class="form-label" for="position_id">Contested Office</label>
+                            <select name="position_id" id="position_id" class="form-control" required>
+                                <option value="">-- Select Office --</option>
+                                <?php foreach ($positionsByElection as $elTitle => $posList): ?>
+                                    <optgroup label="🏛️ <?= htmlspecialchars($elTitle) ?>">
+                                        <?php foreach ($posList as $p): ?>
+                                            <option value="<?= $p['id'] ?>">
+                                                <?= htmlspecialchars($p['title']) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </optgroup>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+
+                        <div class="grid-2" style="gap:1rem; margin-bottom:1rem;">
+                            <div>
+                                <label class="form-label" for="name">Candidate Name</label>
+                                <input type="text" id="name" name="name" class="form-control" required placeholder="e.g. Sarah Jenkins">
+                            </div>
+                            <div>
+                                <label class="form-label" for="party">Party / Slate</label>
+                                <input type="text" id="party" name="party" class="form-control" placeholder="e.g. Campus Action Alliance">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="manifesto">Candidate Manifesto / Vision</label>
+                            <textarea id="manifesto" name="manifesto" class="form-control" rows="2" placeholder="Brief statement of policy priorities..."></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" style="width:100%;">Save Candidate</button>
+                    </form>
+                <?php endif; ?>
             </div>
         </div>
 
